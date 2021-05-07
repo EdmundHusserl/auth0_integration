@@ -8,10 +8,14 @@ from flask import (
 )
 from sqlalchemy import exc
 import json
-from flask_cors import CORS
+from flask_cors import (
+    CORS,
+    cross_origin
+)
 from werkzeug.exceptions import (
     InternalServerError,
     BadRequest,
+    MethodNotAllowed,
     Unauthorized,
     Forbidden,
     NotFound
@@ -23,14 +27,16 @@ from .database.models import (
 )
 from .auth.auth import (
     AuthError, 
-    requires_auth
+    requires_auth,
+    get_required_auth
 )
 import logging 
 
 logging.basicConfig(level=10)
 app = Flask(__name__)
+app.config['CORS_HEADERS'] = 'Content-Type'
 setup_db(app)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 '''
 @TODO uncomment the following line to initialize the datbase
@@ -54,7 +60,7 @@ def get_drinks():
         drinks = [d.short() for d in Drink.query.all()]
         return jsonify({
             "success": True,
-            drinks: drinks
+            "drinks": drinks
         }), 200
     except InternalServerError:
         abort(500)
@@ -83,6 +89,8 @@ def get_drinks_detail(*args, **kwargs):
         abort(401, e.args)
     except Forbidden as e:
         abort(403, e.args)
+    except MethodNotAllowed as e:
+        abort(405)
     except InternalServerError:
         abort(500)
     
@@ -103,7 +111,7 @@ def post_drinks(*args, **kwargs):
     try:
         new_drink = Drink(
             title=payload.get("title"),
-            recipe=payload.get("recipe")
+            recipe=json.dumps(payload.get("recipe"))
         )
         new_drink.insert()
         return jsonify({
@@ -132,52 +140,17 @@ def post_drinks(*args, **kwargs):
     returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the updated drink
         or appropriate status code indicating reason for failure
 '''
-@app.route("/drinks/­<int:id>", methods=["PATCH"])
-@requires_auth("patch:drinks")
-def patch_drinks(id: int):
-    payload = request.get_json()
-    drink_to_patch = Drink.query.get(id)
-    if drink_to_patch is None:
-        NotFound(404, "The requested resource has not been found.")
-    try:
-        drink_to_patch.title = payload.get("title")
-        drink_to_patch.recipe = payload.get("recipe")
-        drink_to_patch.update()
-        return jsonify(drink_to_patch.long()), 200
-    except AuthError as e:
-        abort(e.status_code, e.error)
-    except BadRequest as e:
-        abort(400, e.args)
-    except Unauthorized as e:
-        abort(401, e.args)
-    except Forbidden as e:
-        abort(403, e.args)
-    except NotFound as e:
-        abort(404, e.args)
-    except InternalServerError:
-        abort(500)
-            
-'''
-@TODO implement endpoint
-    DELETE /drinks/<id>
-        where <id> is the existing model id
-        it should respond with a 404 error if <id> is not found
-        it should delete the corresponding row for <id>
-        it should require the 'delete:drinks' permission
-    returns status code 200 and json {"success": True, "delete": id} where id is the id of the deleted record
-        or appropriate status code indicating reason for failure
-'''
-@app.route("/drinks/<int:id>", methods=["DELETE"])
+@app.route("/drinks/<int:drink_id>", methods=["DELETE"])
 @requires_auth(permission="delete:drinks")
-def delete_drink(id: int):
+def delete_drink(drink_id: int):
     try:
-        drink_to_delete = Drink.query.get(id)
+        drink_to_delete = Drink.query.get(drink_id)
         if drink_to_delete is None:
             raise NotFound("The requested resource has not been found.")
         drink_to_delete.delete()
         return jsonify({
             "success": True,
-            "id": id
+            "id": drink_id
         }), 200
     except AuthError as e:
         abort(e.status_code, e.error)
@@ -193,6 +166,53 @@ def delete_drink(id: int):
         abort(500)
     else:
         abort(500)
+
+@app.route("/drinks/­<int:drink_id>", methods=["PATCH"])
+@requires_auth("patch:drinks")
+def patch_drinks(drink_id: int):
+    try:
+        payload = request.get_json()
+        drink_to_patch = Drink.query.get(drink_id)
+                
+        if drink_to_patch is None:
+            raise NotFound(404, "The requested resource has not been found.")
+                
+        title = payload.get("title") 
+        drink_to_patch.title = title if title is not None else drink_to_patch.title 
+        drink_to_patch.recipe = json.dumps(payload.get("recipe"))
+        drink_to_patch.update()
+                
+        return jsonify({
+            "success": True,
+            "drinks": drink_to_patch.long()
+        }), 200
+        
+    except AuthError as e:
+        abort(e.status_code, e.error)
+    except BadRequest as e:
+        abort(400, e.args)
+    except Unauthorized as e:
+        abort(401, e.args)
+    except Forbidden as e:
+        abort(403, e.args)
+    except NotFound as e:
+        abort(404, e.args)
+    except MethodNotAllowed as e:
+        abort(405, e.args)
+    except InternalServerError:
+        abort(500)
+            
+'''
+@TODO implement endpoint
+    DELETE /drinks/<id>
+        where <id> is the existing model id
+        it should respond with a 404 error if <id> is not found
+        it should delete the corresponding row for <id>
+        it should require the 'delete:drinks' permission
+    returns status code 200 and json {"success": True, "delete": id} where id is the id of the deleted record
+        or appropriate status code indicating reason for failure
+'''
+
 
 @app.errorhandler(422)
 def unprocessable(error):
@@ -233,6 +253,14 @@ def not_found(error):
         "error": 404,
         "message": "Not found"
     }), 404
+
+@app.errorhandler(405)
+def not_found(error):
+    return jsonify({
+        "success": False,
+        "error": 405,
+        "message": "Method not allowed"
+    }), 405
 
 @app.errorhandler(500)
 def internal_server_error(error):

@@ -6,7 +6,7 @@ from flask import (
 from functools import wraps
 from jose import jwt
 from urllib.request import urlopen
-
+from typing import List
 
 AUTH0_DOMAIN = 'secure-app-trust-me.us.auth0.com'
 ALGORITHMS = ['RS256']
@@ -146,6 +146,10 @@ def requires_auth(permission=''):
             token = get_token_auth_header()
             payload = verify_decode_jwt(token)
             check_permissions(permission, payload)
-            return f(payload, *args, **kwargs)
+            return f(*args, **kwargs)
         return wrapper
     return requires_auth_decorator
+
+def identify_permission(permissions: List[str], method: str) -> str:
+    return {perm.split(":").upper(): perm \
+        for perm in permissions}.get(method)
