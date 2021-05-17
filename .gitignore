@@ -15,3 +15,5 @@ Thumbs.db
 
 node_modules
 pyvenv.ps1
+cypress.json
+cypress

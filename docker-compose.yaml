@@ -1,0 +1,21 @@
+version: "3"
+services:
+  
+  frontend:
+    build: ./frontend
+    ports:
+      - "4200:4200"    
+    networks:
+      - coffee-shop
+    depends_on: 
+      - backend
+  
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    networks:
+      - coffee-shop
+
+networks: 
+    coffee-shop:     
