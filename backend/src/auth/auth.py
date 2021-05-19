@@ -19,7 +19,7 @@ class AuthError(Exception):
 def get_token_auth_header():
     auth_token = request.headers.get("Authorization") 
     if auth_token is None:
-        raise AuthError("No Authorization header provided", 400)
+        raise AuthError("No Authorization header provided", 401)
     token = auth_token.split(sep=" ")
     if len(token) != 2 or token[0].lower() != "bearer":
         raise AuthError("Authorization header malformed", 400)
@@ -95,6 +95,8 @@ def requires_auth(permission: Any):
         def wrapper(*args, **kwargs):
             token = get_token_auth_header()
             payload = verify_decode_jwt(token)
+            if payload is None:
+                raise AuthError("Unauthorized", 401)
             check_permissions(permission, payload)
             return f(*args, **kwargs)
         return wrapper
