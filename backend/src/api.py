@@ -24,10 +24,19 @@ from .auth.auth import (
     AuthError, 
     requires_auth
 )
+from os import getenv
 import logging 
 
+
+class FallbackCFG:
+    FLASK_CONFIG = "src.config.Development"
+    APP_SETTINGS = "config.py"
+
+
+fallback = FallbackCFG()
 app = Flask(__name__)
-app.config['CORS_HEADERS'] = 'Content-Type'
+app.config.from_object(fallback.FLASK_CONFIG)
+app.config.from_envvar(fallback.APP_SETTINGS)
 setup_db(app)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
@@ -128,7 +137,7 @@ def delete_or_patchdrink(drink_id: int):
             return delete()
 
         elif request.method == "PATCH":
-         
+
             @requires_auth(permission="patch:drinks")
             def patch():
                 if drink is None:
@@ -165,11 +174,13 @@ def delete_or_patchdrink(drink_id: int):
 
 @app.errorhandler(422)
 def unprocessable(error):
-    return jsonify({
-                    "success": False, 
-                    "error": 422,
-                    "message": "unprocessable"
-                    }), 422
+    return jsonify(
+        {
+            "success": False, 
+            "error": 422,
+            "message": "unprocessable"
+        }
+    ), 422
 
 
 @app.errorhandler(400)
@@ -216,7 +227,7 @@ def not_found(error):
     ), 404
 
 @app.errorhandler(405)
-def not_found(error):
+def method_not_allowed(error):
     return jsonify(
         {
             "success": False,
@@ -228,10 +239,21 @@ def not_found(error):
 
 @app.errorhandler(500)
 def internal_server_error(error):
+    error_type = {
+        400: bad_request,
+        401: unauthorized,
+        403: forbidden,
+        404: not_found,
+        405: method_not_allowed  
+    }.get(error.status_code if 'status_code' in dir(error) else 999)
+    
+    if error_type is not None:
+        return error_type(error)
+    
     return jsonify(
         {
             "success": False,
             "error": 500,
-            "message": "Internal server error"
+            "message": "Internal server error"        
         }
     ), 500
