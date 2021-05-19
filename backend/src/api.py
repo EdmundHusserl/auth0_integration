@@ -24,7 +24,10 @@ from .auth.auth import (
     AuthError, 
     requires_auth
 )
-from os import getenv
+from os import (
+    environ,
+    getenv
+)
 import logging 
 
 
@@ -33,10 +36,14 @@ class FallbackCFG:
     APP_SETTINGS = "config.py"
 
 
+# APP CONFIG
+
 fallback = FallbackCFG()
+environ["APP_SETTINGS"] = getenv("APP_SETTINGS", fallback.APP_SETTINGS)
+
 app = Flask(__name__)
-app.config.from_object(fallback.FLASK_CONFIG)
-app.config.from_envvar(fallback.APP_SETTINGS)
+app.config.from_object(getenv("FLASK_CONFIG", fallback.FLASK_CONFIG))
+app.config.from_envvar("APP_SETTINGS")
 setup_db(app)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
