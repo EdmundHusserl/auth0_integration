@@ -165,6 +165,29 @@
 					},
 					"response": []
 				}
+			],
+			"auth": {
+				"type": "noauth"
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
 			]
 		},
 		{
@@ -469,7 +492,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"title\": \"Water3\",\n    \"recipe\": {\n        \"name\": \"Water\",\n        \"color\": \"blue\",\n        \"parts\": 1\n    }\n}"
+							"raw": "{\n    \"title\": \"Water3\",\n    \"recipe\": [\n        {\n            \"name\": \"Water\",\n            \"color\": \"blue\",\n            \"parts\": 1\n        }\n    ]\n}"
 						},
 						"url": {
 							"raw": "{{host}}/drinks",
@@ -496,7 +519,7 @@
 									"",
 									"pm.test(\"value contains drinks array\", function () {",
 									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData.drinks).to.be.an('array')",
+									"    pm.expect(jsonData.drinks).to.be.an('object')",
 									"});"
 								],
 								"type": "text/javascript"
@@ -567,7 +590,7 @@
 				"bearer": [
 					{
 						"key": "token",
-						"value": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Im1MWWFEVDdFWVpOdC13MnFYMXhlQSJ9.eyJpc3MiOiJodHRwczovL3NlY3VyZS1hcHAtdHJ1c3QtbWUudXMuYXV0aDAuY29tLyIsInN1YiI6ImF1dGgwfDYwOTFmOGQ4ZTM4NWJiMDA2YTUxZDNjMiIsImF1ZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NTAwMCIsImlhdCI6MTYyMDE3OTI2NSwiZXhwIjoxNjIwMTg2NDY1LCJhenAiOiJQbzZFYzhqcWI1dktzTHNaMXlhZ25CUnp3aHpRUDloaSIsInNjb3BlIjoiIiwicGVybWlzc2lvbnMiOlsiZGVsZXRlOmRyaW5rcyIsImdldDpkcmlua3MtZGV0YWlsIiwicGF0Y2g6ZHJpbmtzIiwicG9zdDpkcmlua3MiXX0.I2Oerlz6bVbprN5N1qHi83f1Yv89r2nlWY-MPW30-1jOAjlBOg6CdYjVm-NP43-DVU-nlhlgwoiKRe_aj5VvvPYp7RW9dfTBRiE6fBqHH0nRt4Tz4e5nfqLyb1qO3j7aWzlBjYD5PoWEp7g1v6hO7B0DSryq8FHj2DBUhctM-13ngzMuxdXakUmWJoxeh8zGSHe9LtDzcRIlt2OmRv-v2PuPf7ry482R5yRpwkt1r6_K4pGcGMIYs1AkJ2B8VcYer4mTiaXthCeIMKc4LDH5PnjZgOLlJDMYpP0CzUDmLkRx6vhV9nQDQWlV8xWRpTOPvn0xqcFfatFDFx29ICKW6g",
+						"value": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Im1MWWFEVDdFWVpOdC13MnFYMXhlQSJ9.eyJpc3MiOiJodHRwczovL3NlY3VyZS1hcHAtdHJ1c3QtbWUudXMuYXV0aDAuY29tLyIsInN1YiI6ImF1dGgwfDYwOTFmOGQ4ZTM4NWJiMDA2YTUxZDNjMiIsImF1ZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NTAwMCIsImlhdCI6MTYyMTM5MzA3OSwiZXhwIjoxNjIxNDAwMjc5LCJhenAiOiJQbzZFYzhqcWI1dktzTHNaMXlhZ25CUnp3aHpRUDloaSIsInNjb3BlIjoiIiwicGVybWlzc2lvbnMiOlsiZGVsZXRlOmRyaW5rcyIsImdldDpkcmlua3MtZGV0YWlsIiwicGF0Y2g6ZHJpbmtzIiwicG9zdDpkcmlua3MiXX0.TmjzbMLa5DrkIIoFvQXk1Byt7e11qcxDa9w4qUGm92aC9KhsBSJ9ghuAEwzKrWrQwFCTEWNygbjXnssKPBf1vn20jwkdylg90o0HDOAdRzlI0qjU6Rhvs8YcnOYVPJzaQuN-FEEEcVXQDGLcZNpap4B6pAT6cSdWHNuAPZm1UIobtbE5hbMEB5-qgDgcmThk4HQC9VE2GyPXyE0d0U0bgMRC6s4fuwczylv3gX3REfyVUjqbwhr0GRn_YYGXa2blmkzpo1fChbOfnl3Yzi3laZp9xFQt4m_lDU52lcz0JB4KBa7IaAIMP9pgV8AKg3TyF6yZpMTrLblGZB1GJHfk-g",
 						"type": "string"
 					}
 				]
@@ -617,7 +640,7 @@
 	"variable": [
 		{
 			"key": "host",
-			"value": "localhost:5000"
+			"value": "http://localhost:5000"
 		}
 	]
 }
